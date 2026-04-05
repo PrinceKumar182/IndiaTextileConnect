@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${product != null ? product.name + ' | Textile Market' : 'Product | Textile Market'}">Product View</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+<body>
+    
+    <!-- Unified Navbar Component -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="/" aria-label="Home">
+                <i class="fa-solid fa-layer-group"></i> Textile Market
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/products"><i class="fa-solid fa-store"></i> Shop All</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center gap-3">
+                    <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+                        <a class="btn btn-outline-danger btn-sm" href="/admin" aria-label="Admin Dashboard"><i class="fa-solid fa-shield-halved"></i> Admin</a>
+                    </div>
+                    <div th:if="${#authorization.expression('isAuthenticated()')}">
+                        <a class="btn btn-light position-relative" href="/cart" aria-label="Cart" id="cartNavBtn">
+                            <i class="fa-solid fa-cart-shopping"></i> Cart
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cartBadge" style="display:none;">0</span>
+                        </a>
+                    </div>
+                    <div th:if="${#authorization.expression('isAuthenticated()')}">
+                        <form th:action="@{/logout}" method="post" class="m-0">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm" aria-label="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+                        </form>
+                    </div>
+                    <div th:unless="${#authorization.expression('isAuthenticated()')}">
+                        <a class="btn btn-outline-primary btn-sm" href="/login"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div th:if="${product != null}" class="container py-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none"><i class="fa-solid fa-home"></i> Home</a></li>
+                <li class="breadcrumb-item"><a href="/products" class="text-decoration-none">Catalog</a></li>
+                <li class="breadcrumb-item active" aria-current="page" th:text="${product.name}"></li>
+            </ol>
+        </nav>
+
+        <!-- Success Toast (shown when redirected with ?added=true) -->
+        <div th:if="${param.added}" class="alert alert-success shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
+            <i class="fa-solid fa-check-circle fa-lg me-2"></i>
+            <div><strong>Item added to cart!</strong> Continue shopping or proceed to checkout.</div>
+        </div>
+
+        <div class="card card-tx p-4 mb-5">
+            <div class="row g-5 align-items-center">
+                <div class="col-md-6">
+                    <!-- Main Hero Image -->
+                    <div class="position-relative mb-3">
+                        <img id="mainHeroImage" th:src="${#strings.isEmpty(product.getImageUrl()) ? '/images/placeholder.jpg' : product.getImageUrl()}" class="img-tx-hero shadow rounded" alt="Main Product Image">
+                    </div>
+                    
+                    <!-- Extra Images Gallery -->
+                    <div th:if="${product.extraImageUrls != null && !product.extraImageUrls.isEmpty()}" class="d-flex flex-wrap gap-2 mb-3">
+                        <!-- Thumbnail for main image -->
+                        <img th:src="${product.getImageUrl()}" class="thumbnail-img rounded border p-1" style="width: 60px; height: 60px; cursor: pointer; object-fit: cover;" onclick="switchMainImage(this.src)">
+                        
+                        <!-- Extra images -->
+                        <th:block th:each="img : ${product.extraImageUrls}">
+                            <img th:src="${img}" class="thumbnail-img rounded border p-1" style="width: 60px; height: 60px; cursor: pointer; object-fit: cover;" onclick="switchMainImage(this.src)">
+                        </th:block>
+                    </div>
+
+                    <!-- Video Gallery -->
+                    <div th:if="${product.videoUrls != null && !product.videoUrls.isEmpty()}" class="mt-4">
+                        <h5 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-play-circle me-1"></i> Product Videos</h5>
+                        <div th:each="video : ${product.videoUrls}" class="mb-3">
+                            <video controls class="w-100 rounded shadow-sm" style="max-height: 300px; background: #000;">
+                                <source th:src="${video}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <span class="badge bg-primary mb-2 px-3 py-2"><i class="fa-solid fa-tag"></i> Premium Quality</span>
+                    <h1 class="display-5 fw-bold mb-3" th:text="${product.name}"></h1>
+                    <p class="lead text-muted mb-4">Crafted with exact specifications for the premium market. Available strictly in designated sets.</p>
+                    
+                    <div class="d-flex align-items-center mb-4">
+                        <h2 class="text-success fw-bold mb-0 me-3" th:text="${'$' + product.price}"></h2>
+                        <span class="text-muted small"><i class="fa-solid fa-layer-group"></i> Sets Available: <span class="fw-bold text-dark" th:text="${product.setsAvailable}"></span></span>
+                    </div>
+
+                    <div th:if="${#authorization.expression('isAuthenticated()')}">
+                        <!-- Buy Now -->
+                        <form th:action="@{/buyNow}" method="post" class="d-inline border-0 me-2">
+                            <input type="hidden" name="productId" th:value="${product.id}">
+                            <button type="submit" class="btn btn-success-tx btn-lg px-5 shadow-sm" onclick="showLoader(this)"><i class="fa-solid fa-bolt"></i> Buy Now</button>
+                        </form>
+
+                        <!-- Add to Cart with - 1 + controls -->
+                        <div class="d-inline-block align-middle" id="cartControlWrapper">
+                            <div id="addCartInitial">
+                                <button type="button" id="addCartBtn" class="btn btn-outline-primary btn-lg px-4 bg-white" onclick="handleFirstAdd()">
+                                    <i class="fa-solid fa-cart-plus"></i> Add to Cart
+                                </button>
+                            </div>
+                            <div id="qtyControls" style="display:none;" class="d-inline-flex align-items-center border rounded-pill px-2 py-1 bg-white shadow-sm">
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle" onclick="changeQty(-1)" aria-label="Decrease quantity">
+                                    <i class="fa-solid fa-minus"></i>
+                                </button>
+                                <span id="qtyDisplay" class="fw-bold mx-3 fs-5">1</span>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle" onclick="changeQty(1)" aria-label="Increase quantity">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:unless="${#authorization.expression('isAuthenticated()')}">
+                        <a href="/login" class="btn btn-primary-tx btn-lg px-5 shadow-sm"><i class="fa-solid fa-lock"></i> Login to Purchase</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${product == null}" class="container py-5 text-center">
+        <i class="fa-solid fa-ghost fa-5x text-muted mb-4"></i>
+        <h2>Product Not Found</h2>
+        <p class="text-muted">The requested product may have been removed.</p>
+        <a href="/products" class="btn btn-primary-tx mt-3"><i class="fa-solid fa-store"></i> Browse Catalog</a>
+    </div>
+
+    <!-- UI Toast for Cart Add -->
+    <div id="cartToast" class="toast-tx">
+        <i class="fa-solid fa-check-circle text-success me-2"></i> Item Added to Cart!
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        const productId = /*[[${product?.id}]]*/ '';
+        let currentQty = 0;
+
+        function switchMainImage(src) {
+            document.getElementById('mainHeroImage').src = src;
+        }
+
+        function showLoader(btn) {
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+            btn.classList.add('disabled');
+        }
+
+        // Load cart badge count on page load
+        async function loadCartBadge() {
+            try {
+                const res = await fetch('/api/cart/count');
+                if (res.ok) {
+                    const data = await res.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (badge && data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = '';
+                    } else if (badge) {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch(e) {}
+        }
+
+        async function handleFirstAdd() {
+            const btn = document.getElementById('addCartBtn');
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Adding...';
+            btn.disabled = true;
+
+            try {
+                const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+                const formData = new URLSearchParams();
+                formData.append('productId', productId);
+                formData.append('quantity', '1');
+
+                const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+                headers[csrfHeader] = csrfToken;
+
+                const res = await fetch('/addToCart', {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData.toString(),
+                    redirect: 'manual'
+                });
+
+                // Show qty controls
+                currentQty = 1;
+                document.getElementById('addCartInitial').style.display = 'none';
+                document.getElementById('qtyControls').style.display = '';
+                document.getElementById('qtyDisplay').textContent = currentQty;
+
+                // Toast
+                const toast = document.getElementById('cartToast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2500);
+
+                // Update badge
+                loadCartBadge();
+            } catch(e) {
+                btn.innerHTML = '<i class="fa-solid fa-cart-plus"></i> Add to Cart';
+                btn.disabled = false;
+                alert('Network error. Please try again.');
+            }
+        }
+
+        async function changeQty(delta) {
+            const newQty = currentQty + delta;
+            if (newQty < 0) return;
+
+            try {
+                const formData = new URLSearchParams();
+                formData.append('productId', productId);
+                formData.append('quantity', newQty.toString());
+
+                const res = await fetch('/api/cart/updateQuantity', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (newQty === 0 || data.removed) {
+                        // Removed from cart, show Add button again
+                        currentQty = 0;
+                        document.getElementById('addCartInitial').style.display = '';
+                        document.getElementById('qtyControls').style.display = 'none';
+                        const btn = document.getElementById('addCartBtn');
+                        btn.innerHTML = '<i class="fa-solid fa-cart-plus"></i> Add to Cart';
+                        btn.disabled = false;
+                    } else {
+                        currentQty = newQty;
+                        document.getElementById('qtyDisplay').textContent = currentQty;
+                    }
+                    // Update badge
+                    const badge = document.getElementById('cartBadge');
+                    if (badge && data.cartCount > 0) {
+                        badge.textContent = data.cartCount;
+                        badge.style.display = '';
+                    } else if (badge) {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch(e) {
+                alert('Failed to update quantity.');
+            }
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', loadCartBadge);
+    </script>
+</body>
+</html>

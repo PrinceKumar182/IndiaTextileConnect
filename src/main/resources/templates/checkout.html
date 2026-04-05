@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Checkout Process | Textile Market</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+    
+    <!-- Ultra-minimal Checkout Navbar (Removes distractions) -->
+    <nav class="navbar navbar-light bg-white border-bottom shadow-sm">
+        <div class="container d-flex justify-content-between">
+            <a class="navbar-brand fw-bold text-dark m-0 pb-1" href="/cart" aria-label="Back to Cart">
+                 <i class="fa-solid fa-arrow-left text-muted me-2 small"></i> Textile Checkout <i class="fa-solid fa-lock text-success ms-1 small"></i>
+            </a>
+            <span class="text-muted small fw-bold"><i class="fa-solid fa-shield-halved text-success"></i> TLS Encrypted</span>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        
+        <!-- Error Banner Injection Core -->
+        <div id="errorBanner" class="alert alert-danger shadow-sm border-0 d-none align-items-center" role="alert">
+            <i class="fa-solid fa-circle-exclamation fa-2x me-3"></i>
+            <div>
+                <strong id="errorBannerTitle">Payment Error</strong>
+                <p id="errorBannerMessage" class="mb-0 small">Something went wrong. Please verify details.</p>
+            </div>
+        </div>
+
+        <div class="row justify-content-center g-4">
+            
+            <div class="col-lg-6">
+                <!-- Delivery Essentials Form -->
+                <div class="card card-tx">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="bg-primary text-white rounded-circle text-center me-3" style="width: 35px; height: 35px; line-height: 35px;"><i class="fa-solid fa-truck"></i></div>
+                            <h4 class="mb-0 fw-bold">Delivery Parameters</h4>
+                        </div>
+                        
+                        <form id="checkoutForm" oninput="validateForm()">
+                            <input type="hidden" id="checkoutToken" th:value="${checkoutToken}">
+                            <input type="hidden" id="razorpayKey" th:value="${razorpayKey}">
+                            <input type="hidden" id="totalAmountBase" th:value="${totalAmount}">
+                            
+                            <div class="mb-4 position-relative">
+                                <label class="form-label text-muted small fw-bold">10-Digit Mobile Number <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-mobile-screen"></i></span>
+                                    <input type="text" id="phone" class="form-control border-start-0 ps-0" placeholder="e.g. 9876543210" required>
+                                </div>
+                                <div id="phoneError" class="form-text text-danger d-none"><i class="fa-solid fa-circle-xmark"></i> Must be exactly 10 numeric digits.</div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label text-muted small fw-bold">Destination City <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-city"></i></span>
+                                    <input type="text" id="city" class="form-control border-start-0 ps-0" placeholder="Mumbai, Delhi, etc." required>
+                                </div>
+                            </div>
+
+                            <div class="mb-5">
+                                <label class="form-label text-muted small fw-bold">Precise Address Route <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0 align-items-start pt-2"><i class="fa-solid fa-map-location-dot"></i></span>
+                                    <textarea id="address" class="form-control border-start-0 ps-0" rows="3" placeholder="Building, Street, Landmark" required></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grand Verification Pane -->
+            <div class="col-lg-4">
+                <div class="card card-tx position-sticky" style="top: 100px;">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4 text-center">Payment Vault</h5>
+                        
+                        <div class="d-flex justify-content-between align-items-center bg-light rounded pt-3 pb-3 px-3 mb-4 border">
+                            <span class="fw-bold text-muted">To Pay</span>
+                            <span class="h2 fw-bold text-success mb-0" th:text="${'$' + totalAmount}"></span>
+                        </div>
+                        
+                        <!-- Auto-validating Submit Button -->
+                        <button type="button" id="payBtn" onclick="initiateSecureCheckout()" class="btn btn-primary-tx w-100 py-3 fw-bold shadow-sm" disabled>
+                            <i class="fa-solid fa-lock me-2"></i> Launch Secure Gateway
+                        </button>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="text-center">
+                            <div class="d-flex justify-content-center gap-3 mb-3 text-muted">
+                                <i class="fa-brands fa-cc-visa fa-2x"></i>
+                                <i class="fa-brands fa-cc-mastercard fa-2x"></i>
+                                <i class="fa-brands fa-cc-amex fa-2x"></i>
+                                <i class="fa-solid fa-building-columns fa-2x"></i>
+                            </div>
+                            <p class="small text-muted mb-0"><i class="fa-solid fa-shield-cat text-success"></i> ISO/IEC 27001 PCI-DSS Ready</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Application Security Logic -->
+    <script>
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+        const phoneRegex = /^\d{10}$/;
+
+        function validateForm() {
+            const phone = document.getElementById("phone").value;
+            const city = document.getElementById("city").value;
+            const address = document.getElementById("address").value;
+            const btn = document.getElementById("payBtn");
+            const phoneError = document.getElementById("phoneError");
+
+            let isValid = true;
+
+            // DOM Validation Hooks
+            if(phone.length > 0 && !phoneRegex.test(phone)) {
+                phoneError.classList.remove('d-none');
+                isValid = false;
+            } else {
+                phoneError.classList.add('d-none');
+            }
+
+            if(!phoneRegex.test(phone) || city.trim().length === 0 || address.trim().length === 0) {
+                isValid = false;
+            }
+
+            // Sync Button Context
+            btn.disabled = !isValid;
+        }
+
+        function triggerErrorBanner(title, message) {
+            const banner = document.getElementById("errorBanner");
+            document.getElementById("errorBannerTitle").innerText = title;
+            document.getElementById("errorBannerMessage").innerText = message;
+            banner.classList.remove('d-none');
+            banner.classList.add('d-flex');
+            window.scrollTo(0, 0);
+        }
+
+        async function initiateSecureCheckout() {
+            const btn = document.getElementById("payBtn");
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Establishing Tunnel...';
+
+            const payload = {
+                checkoutToken: document.getElementById("checkoutToken").value,
+                phone: document.getElementById("phone").value,
+                city: document.getElementById("city").value,
+                address: document.getElementById("address").value
+            };
+
+            try {
+                const initRes = await fetch("/api/checkout/initiate", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                    body: JSON.stringify(payload)
+                });
+                
+                const initData = await initRes.json();
+                
+                if (!initRes.ok) {
+                    triggerErrorBanner("Pre-flight Validation Blocked", initData.error || "Unable to reserve stock.");
+                    btn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Retry Protocol';
+                    btn.disabled = false;
+                    return;
+                }
+
+                const rzpOrderId = initData.razorpayOrderId;
+                const dbOrderId = initData.dbOrderId;
+                const amount = initData.amount;
+
+                const options = {
+                    "key": document.getElementById("razorpayKey").value,
+                    "amount": amount * 100, // paise converter
+                    "currency": "USD",
+                    "name": "Textile Market Enterprise",
+                    "description": "Secure SSL Link",
+                    "order_id": rzpOrderId,
+                    "handler": async function (response) {
+                        btn.innerHTML = '<i class="fa-solid fa-microchip fa-spin"></i> Committing Ledger...';
+                        
+                        const verifyPayload = {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            dbOrderId: dbOrderId,
+                            amount: amount
+                        };
+                        
+                        const verifyRes = await fetch("/api/checkout/verify", {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                            body: JSON.stringify(verifyPayload)
+                        });
+
+                        const verifyData = await verifyRes.json();
+                        if (verifyRes.ok) {
+                            window.location.href = "/?success=order_placed";
+                        } else {
+                            triggerErrorBanner("Cryptographic Verification Failed", verifyData.error || "Integrity anomaly detected.");
+                            btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Session Aborted';
+                        }
+                    },
+                    "theme": { "color": "#4f46e5" },
+                    "modal": {
+                        "ondismiss": function() {
+                            btn.innerHTML = '<i class="fa-solid fa-lock me-2"></i> Launch Secure Gateway';
+                            btn.disabled = false;
+                            triggerErrorBanner("Payment Dismissed", "You closed the vault. Don't worry, your reservation will be gracefully released soon.");
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.on('payment.failed', function (response){
+                    triggerErrorBanner("Transaction Declined", response.error.description || "The bank blocked the request. Stock is restoring.");
+                    btn.innerHTML = '<i class="fa-solid fa-rotate-right me-2"></i> Retry Payment';
+                    btn.disabled = false;
+                });
+                rzp.open();
+
+            } catch (error) {
+                triggerErrorBanner("Network Timeout", "Unable to connect securely to infrastructure. Check your connection.");
+                btn.innerHTML = '<i class="fa-solid fa-rotate-right me-2"></i> Relaunch Tunnel';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
