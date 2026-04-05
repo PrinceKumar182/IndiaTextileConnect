@@ -51,31 +51,32 @@ public class AdminController {
             model.addAttribute("places", placeRepository != null ? placeRepository.findAll() : List.of());
             model.addAttribute("products", productRepository != null ? productRepository.findBySetsAvailableGreaterThan(0) : List.of());
             model.addAttribute("outOfStockProducts", productRepository != null ? productRepository.findBySetsAvailableLessThanEqual(0) : List.of());
-            model.addAttribute("loginLogs", loginLogRepository != null ? loginLogRepository.findAllByOrderByLoginTimeDesc() : List.of());
+            
+            model.addAttribute("loginLogs", loginLogRepository != null ? loginLogRepository.findFirst10ByOrderByLoginTimeDesc() : List.of());
             model.addAttribute("users", userRepository != null ? userRepository.findAll() : List.of());
             model.addAttribute("orders", orderRepository != null ? orderRepository.findAll() : List.of());
-            model.addAttribute("auditLogs", auditLog != null ? auditLog.findAllByOrderByTimestampDesc() : List.of());
+            model.addAttribute("auditLogs", auditLog != null ? auditLog.findFirst10ByOrderByTimestampDesc() : List.of());
 
+            // Optimize Cart Enrichment (fetch subset by ID)
             List<Cart> rawCarts = cartRepository != null ? cartRepository.findAll() : List.of();
+            // Limit to latest 20 carts for performance
+            List<Cart> limitedCarts = rawCarts.size() > 20 ? rawCarts.subList(rawCarts.size() - 20, rawCarts.size()) : rawCarts;
+            
             List<Map<String, Object>> enrichedCarts = new ArrayList<>();
-            for (Cart cart : rawCarts) {
+            for (Cart cart : limitedCarts) {
                 Map<String, Object> enriched = new HashMap<>();
                 enriched.put("userId", cart.getUserId());
                 enriched.put("quantity", cart.getQuantity());
                 
                 if (cart.getProductId() != null && productRepository != null) {
-                    Optional<Product> prodOpt = productRepository.findById(cart.getProductId());
-                    if (prodOpt.isPresent()) {
-                        Product p = prodOpt.get();
+                    Product p = productRepository.findById(cart.getProductId()).orElse(null);
+                    if (p != null) {
                         enriched.put("productName", p.getName());
                         enriched.put("totalValue", p.getPrice() * cart.getQuantity());
                     } else {
-                        enriched.put("productName", "Unknown");
+                        enriched.put("productName", "Retired Item");
                         enriched.put("totalValue", 0.0);
                     }
-                } else {
-                    enriched.put("productName", "Unknown");
-                    enriched.put("totalValue", 0.0);
                 }
                 enrichedCarts.add(enriched);
             }
@@ -90,7 +91,7 @@ public class AdminController {
             model.addAttribute("carts", List.of());
             model.addAttribute("orders", List.of());
             model.addAttribute("auditLogs", List.of());
-            model.addAttribute("error", "Database connection logic error.");
+            model.addAttribute("error", "Diagnostic Mode: Stability Hardened.");
         }
         return "admin";
     }

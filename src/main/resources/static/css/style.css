@@ -4,7 +4,7 @@
 :root {
   --primary-indigo: #4f46e5;
   --secondary-emerald: #10b981;
-  --bg-cream: #f9fafb;
+  --bg-cream: #eaeded;
   --card-glass: rgba(255, 255, 255, 0.9);
   --text-dark: #1f2937;
   --text-muted: #6b7280;
@@ -20,14 +20,7 @@ body {
   min-height: 100vh;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.02) 10px, rgba(0,0,0,0.02) 20px);
-  z-index: -1;
-  pointer-events: none;
-}
+
 
 /* Accessibility Focus States */
 a:focus, button:focus, input:focus, select:focus, textarea:focus {

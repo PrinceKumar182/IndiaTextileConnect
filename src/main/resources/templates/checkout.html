@@ -8,8 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 </head>
 <body>
     
@@ -87,7 +85,7 @@
                         
                         <div class="d-flex justify-content-between align-items-center bg-light rounded pt-3 pb-3 px-3 mb-4 border">
                             <span class="fw-bold text-muted">To Pay</span>
-                            <span class="h2 fw-bold text-success mb-0" th:text="${'$' + totalAmount}"></span>
+                            <span class="h2 fw-bold text-success mb-0" th:text="${'₹' + totalAmount}"></span>
                         </div>
                         
                         <!-- Auto-validating Submit Button -->
@@ -115,8 +113,7 @@
 
     <!-- Application Security Logic -->
     <script>
-        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
         const phoneRegex = /^\d{10}$/;
 
         function validateForm() {
@@ -168,7 +165,7 @@
             try {
                 const initRes = await fetch("/api/checkout/initiate", {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 
