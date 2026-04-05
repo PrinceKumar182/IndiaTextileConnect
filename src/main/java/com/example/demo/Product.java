@@ -31,6 +31,9 @@ public class Product {
         this.placeId = placeId;
         this.minQuantity = minQuantity;
         this.setsAvailable = setsAvailable;
+        // Ensure lists are initialized
+        this.extraImageUrls = new java.util.ArrayList<>();
+        this.videoUrls = new java.util.ArrayList<>();
     }
 
     // getters and setters
@@ -75,6 +78,7 @@ public class Product {
     }
 
     public java.util.List<String> getExtraImageUrls() {
+        if (extraImageUrls == null) extraImageUrls = new java.util.ArrayList<>();
         return extraImageUrls;
     }
 
@@ -83,6 +87,7 @@ public class Product {
     }
 
     public java.util.List<String> getVideoUrls() {
+        if (videoUrls == null) videoUrls = new java.util.ArrayList<>();
         return videoUrls;
     }
 
