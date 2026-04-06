@@ -46,30 +46,14 @@ public class DataLoader implements CommandLineRunner {
             mongoTemplate.getDb().getName();
             System.out.println("✅ MongoDB connected successfully to database: " + mongoTemplate.getDb().getName());
 
-            // Add initial places
-            if (placeRepository != null && placeRepository.count() == 0) {
-                placeRepository.save(new Place("Kolkata"));
-                placeRepository.save(new Place("Delhi"));
-                placeRepository.save(new Place("Surat"));
-                placeRepository.save(new Place("Ahmedabad"));
-                placeRepository.save(new Place("Varanasi"));
-                System.out.println("✅ Initial places added");
-            }
+            // Initial places removed to prevent ghost-respawning when user clears their DB.
 
             // Add admin user
             if (userRepository != null && userRepository.findByUsername("9931435323").isEmpty()) {
                 userRepository.save(new User("9931435323", passwordEncoder.encode("Papa@8055"), "ADMIN", "9931435323"));
             }
 
-            // Add sample products
-            if (productRepository != null && placeRepository != null && productRepository.count() == 0) {
-                Place kolkata = placeRepository.findAll().stream().filter(p -> p.getName().equals("Kolkata")).findFirst().orElse(null);
-                if (kolkata != null) {
-                    productRepository.save(new Product("Cotton Fabric", "High quality cotton", 100.0, "https://via.placeholder.com/300x200?text=Cotton+Fabric", true, true, kolkata.getId(), null, 10, 50));
-                    productRepository.save(new Product("Silk Saree", "Beautiful silk saree", 500.0, "https://via.placeholder.com/300x200?text=Silk+Saree", false, true, kolkata.getId(), null, 1, 20));
-                    System.out.println("✅ Sample products added");
-                }
-            }
+            // Sample products removed to allow for clean production deployments without dummy rows.
 
         } catch (Exception e) {
             System.err.println("❌ MongoDB connection failed: " + e.getMessage());
