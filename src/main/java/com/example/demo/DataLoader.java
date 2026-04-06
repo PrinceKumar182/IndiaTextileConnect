@@ -65,8 +65,8 @@ public class DataLoader implements CommandLineRunner {
             if (productRepository != null && placeRepository != null && productRepository.count() == 0) {
                 Place kolkata = placeRepository.findAll().stream().filter(p -> p.getName().equals("Kolkata")).findFirst().orElse(null);
                 if (kolkata != null) {
-                productRepository.save(new Product("Cotton Fabric", "High quality cotton", 100.0, "https://via.placeholder.com/300x200?text=Cotton+Fabric", true, true, kolkata.getId(), 10, 50));
-                productRepository.save(new Product("Silk Saree", "Beautiful silk saree", 500.0, "https://via.placeholder.com/300x200?text=Silk+Saree", false, true, kolkata.getId(), 1, 20));
+                    productRepository.save(new Product("Cotton Fabric", "High quality cotton", 100.0, "https://via.placeholder.com/300x200?text=Cotton+Fabric", true, true, kolkata.getId(), null, 10, 50));
+                    productRepository.save(new Product("Silk Saree", "Beautiful silk saree", 500.0, "https://via.placeholder.com/300x200?text=Silk+Saree", false, true, kolkata.getId(), null, 1, 20));
                     System.out.println("✅ Sample products added");
                 }
             }

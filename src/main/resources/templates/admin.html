@@ -114,7 +114,8 @@
                     <div class="card-body">
                         <form th:action="@{/admin/addProduct}" method="post" enctype="multipart/form-data" class="bg-light p-3 rounded mb-4">
                             <div class="row g-2">
-                                <div class="col-md-3"><select name="placeId" class="form-select" required><option value="" disabled selected>Assign Hub...</option><option th:each="place : ${places}" th:value="${place.id}" th:text="${place.name}"></option></select></div>
+                                <div class="col-md-2"><select name="placeId" class="form-select" required><option value="" disabled selected>Hub...</option><option th:each="place : ${places}" th:value="${place.id}" th:text="${place.name}"></option></select></div>
+                                <div class="col-md-2"><select name="categoryId" class="form-select" required><option value="" disabled selected>Category...</option><option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option></select></div>
                                 <div class="col-md-3"><input type="text" name="name" class="form-control" placeholder="Product Title" required></div>
                                 <div class="col-md-2"><input type="number" step="0.01" name="price" class="form-control" placeholder="$ Price" required></div>
                                 <div class="col-md-2"><input type="number" name="setsAvailable" class="form-control" placeholder="Sets" required></div>
@@ -161,6 +162,91 @@
                                                     aria-label="Drop Product"><i class="fa-solid fa-ban"></i></button>
                                         </td>
                                     </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4 mt-2">
+            <!-- Categories Module -->
+            <div class="col-lg-6">
+                <h4 class="fw-bold mb-3 text-secondary"><i class="fa-solid fa-tags text-primary"></i> Category Manager</h4>
+                <div class="card card-tx h-100">
+                    <div class="card-body">
+                        <form th:action="@{/admin/addCategory}" method="post" class="d-flex gap-2 mb-4">
+                            <input type="text" name="name" class="form-control" placeholder="Category Name (e.g. Shirts)" required minlength="2">
+                            <input type="text" name="description" class="form-control" placeholder="Brief description...">
+                            <button type="submit" class="btn btn-primary-tx text-nowrap"><i class="fa-solid fa-plus"></i> Add Category</button>
+                        </form>
+                        <ul class="list-group list-group-flush" style="max-height: 250px; overflow-y: auto;">
+                            <li th:each="category : ${categories}" class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <h6 class="mb-0 fw-bold" th:text="${category.name}"></h6>
+                                    <small class="text-muted" th:text="${category.description} ?: 'No description'"></small>
+                                </div>
+                                <button type="button" class="btn btn-outline-danger btn-sm" 
+                                        th:attr="onclick='promptDelete(this, \'' + ${category.id} + '\', \'/admin/deleteCategory\')'" 
+                                        aria-label="Delete Category"><i class="fa-solid fa-trash-can"></i></button>
+                            </li>
+                            <li th:if="${#lists.isEmpty(categories)}" class="list-group-item text-muted text-center px-0">No categories found.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carousel Config Module -->
+            <div class="col-lg-6">
+                <h4 class="fw-bold mb-3 text-secondary"><i class="fa-solid fa-images text-warning"></i> Homepage Slider</h4>
+                <div class="card card-tx h-100">
+                    <div class="card-body">
+                        <form th:action="@{/admin/addCarouselMedia}" method="post" enctype="multipart/form-data" class="bg-light p-3 rounded mb-4">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <select name="type" class="form-select" required>
+                                        <option value="IMAGE">Image</option>
+                                        <option value="VIDEO">Video</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="file" name="mediaFile" class="form-control" required accept="image/*,video/*">
+                                </div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-4"><input type="number" name="orderIndex" class="form-control" placeholder="Order (e.g. 1)" required min="0"></div>
+                                <div class="col-md-4"><input type="text" name="title" class="form-control" placeholder="Title (Optional)"></div>
+                                <div class="col-md-4"><input type="text" name="subtitle" class="form-control" placeholder="Subtitle (Optional)"></div>
+                            </div>
+                            <button type="submit" class="btn btn-warning w-100 mt-3 fw-bold"><i class="fa-solid fa-upload"></i> Upload to Slider</button>
+                        </form>
+                        <div class="table-responsive" style="max-height: 200px;">
+                            <table class="table table-hover">
+                                <thead class="table-light sticky-top"><tr><th>Order</th><th>Type</th><th>Preview</th><th>Title</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    <tr th:each="media : ${carouselMedias}">
+                                        <td th:text="${media.orderIndex}"></td>
+                                        <td><span class="badge bg-secondary" th:text="${media.type}"></span></td>
+                                        <td>
+                                            <img th:if="${media.type == 'IMAGE'}" th:src="${media.mediaUrl}" width="40" height="40" style="object-fit:cover;" class="rounded">
+                                            <i th:if="${media.type == 'VIDEO'}" class="fa-solid fa-film fa-2x text-muted"></i>
+                                        </td>
+                                        <td th:text="${media.title} ?: 'N/A'"></td>
+                                        <td>
+                                            <form th:action="@{/admin/deleteCarouselMedia}" method="post" class="m-0">
+                                                <input type="hidden" name="id" th:value="${media.id}">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-trash-can"></i></button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(carouselMedias)}"><td colspan="5" class="text-center text-muted">No media in slider.</td></tr>
                                 </tbody>
                             </table>
                         </div>

@@ -14,6 +14,11 @@ import java.util.Optional;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 @Controller
 public class HomeController {
 
@@ -21,7 +26,16 @@ public class HomeController {
     private PlaceRepository placeRepository;
 
     @Autowired(required = false)
+    private CategoryRepository categoryRepository;
+
+    @Autowired(required = false)
+    private CarouselMediaRepository carouselMediaRepository;
+
+    @Autowired(required = false)
     private ProductRepository productRepository;
+
+    @Autowired(required = false)
+    private ProductService productService;
 
     @Autowired(required = false)
     private VisitorRepository visitorRepository;
@@ -33,10 +47,13 @@ public class HomeController {
     public String home(Model model) {
         try {
             model.addAttribute("places", placeRepository != null ? placeRepository.findAll() : List.of());
+            model.addAttribute("categories", categoryRepository != null ? categoryRepository.findAll() : List.of());
+            model.addAttribute("carouselMedias", carouselMediaRepository != null ? carouselMediaRepository.findAllByOrderByOrderIndexAsc() : List.of());
             model.addAttribute("mostlyBought", productRepository != null ? productRepository.findByIsMostlyBoughtTrueAndSetsAvailableGreaterThan(0) : List.of());
             model.addAttribute("newlyAdded", productRepository != null ? productRepository.findByIsNewlyAddedTrueAndSetsAvailableGreaterThan(0) : List.of());
         } catch (Exception e) {
             model.addAttribute("places", List.of());
+            model.addAttribute("carouselMedias", List.of());
             model.addAttribute("mostlyBought", List.of());
             model.addAttribute("newlyAdded", List.of());
             model.addAttribute("error", "Database connection issue.");
@@ -62,18 +79,32 @@ public class HomeController {
     }
 
     @GetMapping("/products")
-    public String products(@RequestParam(required = false) String placeId, Model model) {
+    public String products(@RequestParam(required = false) String placeId,
+                           @RequestParam(required = false) String categoryId,
+                           @RequestParam(required = false) String sortBy,
+                           @RequestParam(required = false, defaultValue = "asc") String order,
+                           @RequestParam(required = false, defaultValue = "0") int page,
+                           @RequestParam(required = false, defaultValue = "12") int size,
+                           Model model) {
         try {
-            if (placeId == null || placeId.isEmpty()) {
-                model.addAttribute("products", productRepository != null ? productRepository.findBySetsAvailableGreaterThan(0) : List.of());
-                model.addAttribute("place", null);
+            model.addAttribute("places", placeRepository != null ? placeRepository.findAll() : List.of());
+            model.addAttribute("categories", categoryRepository != null ? categoryRepository.findAll() : List.of());
+
+            if (productService != null) {
+                Sort defaultSort = Sort.unsorted();
+                if (sortBy != null && !sortBy.isBlank()) {
+                    defaultSort = Sort.by(order.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
+                }
+                Pageable pageable = PageRequest.of(page, size, defaultSort);
+                
+                Page<Product> productPage = productService.filterProducts(placeId, categoryId, null, pageable);
+                model.addAttribute("productPage", productPage);
+                model.addAttribute("products", productPage.getContent());
             } else {
-                model.addAttribute("products", productRepository != null ? productRepository.findByPlaceIdAndSetsAvailableGreaterThan(placeId, 0) : List.of());
-                model.addAttribute("place", placeRepository != null ? placeRepository.findById(placeId).orElse(null) : null);
+                model.addAttribute("products", List.of());
             }
         } catch (Exception e) {
             model.addAttribute("products", List.of());
-            model.addAttribute("place", null);
             model.addAttribute("error", "Database connection issue.");
         }
         return "products";
@@ -91,9 +122,19 @@ public class HomeController {
     }
 
     @GetMapping("/search")
-    public String search(@RequestParam String query, Model model) {
+    public String search(@RequestParam String query,
+                         @RequestParam(required = false, defaultValue = "0") int page,
+                         @RequestParam(required = false, defaultValue = "12") int size,
+                         Model model) {
         try {
-            model.addAttribute("products", productRepository != null ? productRepository.findByNameContainingIgnoreCaseAndSetsAvailableGreaterThan(query, 0) : List.of());
+            if (productService != null) {
+                Pageable pageable = PageRequest.of(page, size);
+                Page<Product> productPage = productService.filterProducts(null, null, query, pageable);
+                model.addAttribute("productPage", productPage);
+                model.addAttribute("products", productPage.getContent());
+            } else {
+                model.addAttribute("products", List.of());
+            }
             model.addAttribute("searchQuery", query);
         } catch (Exception e) {
             model.addAttribute("products", List.of());

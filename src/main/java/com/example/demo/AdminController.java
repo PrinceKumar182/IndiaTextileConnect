@@ -45,6 +45,12 @@ public class AdminController {
     @Autowired(required = false)
     private UserRepository userRepository;
 
+    @Autowired(required = false)
+    private CategoryRepository categoryRepository;
+
+    @Autowired(required = false)
+    private CarouselMediaRepository carouselMediaRepository;
+
     @GetMapping
     public String admin(Model model) {
         try {
@@ -56,6 +62,8 @@ public class AdminController {
             model.addAttribute("users", userRepository != null ? userRepository.findAll() : List.of());
             model.addAttribute("orders", orderRepository != null ? orderRepository.findAll() : List.of());
             model.addAttribute("auditLogs", auditLog != null ? auditLog.findFirst10ByOrderByTimestampDesc() : List.of());
+            model.addAttribute("categories", categoryRepository != null ? categoryRepository.findAll() : List.of());
+            model.addAttribute("carouselMedias", carouselMediaRepository != null ? carouselMediaRepository.findAllByOrderByOrderIndexAsc() : List.of());
 
             // Optimize Cart Enrichment (fetch subset by ID)
             List<Cart> rawCarts = cartRepository != null ? cartRepository.findAll() : List.of();
@@ -91,6 +99,8 @@ public class AdminController {
             model.addAttribute("carts", List.of());
             model.addAttribute("orders", List.of());
             model.addAttribute("auditLogs", List.of());
+            model.addAttribute("categories", List.of());
+            model.addAttribute("carouselMedias", List.of());
             model.addAttribute("error", "Diagnostic Mode: Stability Hardened.");
         }
         return "admin";
@@ -122,138 +132,4 @@ public class AdminController {
         return "redirect:/admin?success=hub_deleted";
     }
 
-    @Value("${app.upload.dir:src/main/resources/static/uploads}")
-    private String uploadDir;
-
-    @PostMapping("/addProduct")
-    public String addProduct(
-            @RequestParam String name,
-            @RequestParam(required = false, defaultValue = "") String description,
-            @RequestParam double price,
-            @RequestParam(required = false, defaultValue = "") String imageUrl,
-            @RequestParam(required = false) MultipartFile imageFile,
-            @RequestParam(required = false, defaultValue = "false") boolean isMostlyBought,
-            @RequestParam(required = false, defaultValue = "false") boolean isNewlyAdded,
-            @RequestParam String placeId,
-            @RequestParam(required = false, defaultValue = "1") int minQuantity,
-            @RequestParam int setsAvailable,
-            @RequestParam(required = false) MultipartFile[] extraImageFiles,
-            @RequestParam(required = false) MultipartFile[] videoFiles) {
-        try {
-            if (minQuantity <= 0 || setsAvailable <= 0) {
-                return "redirect:/admin?error=invalid_quantity_or_stock";
-            }
-
-            // Handle image: prefer uploaded file over URL
-            String resolvedImageUrl = imageUrl != null && !imageUrl.isBlank() ? imageUrl : "";
-            if (imageFile != null && !imageFile.isEmpty()) {
-                String originalFilename = imageFile.getOriginalFilename();
-                if (originalFilename != null) {
-                    String ext = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
-                    if (List.of("jpg", "jpeg", "png").contains(ext)) {
-                        String uniqueName = UUID.randomUUID() + "." + ext;
-                        Path uploadPath = Paths.get(uploadDir);
-                        if (!Files.exists(uploadPath)) {
-                            Files.createDirectories(uploadPath);
-                        }
-                        Files.copy(imageFile.getInputStream(), uploadPath.resolve(uniqueName));
-                        resolvedImageUrl = "/uploads/" + uniqueName;
-                    } else {
-                        return "redirect:/admin?error=invalid_image_type";
-                    }
-                }
-            }
-
-            Product product = new Product(name, description, price, resolvedImageUrl, isMostlyBought, isNewlyAdded, placeId, minQuantity, setsAvailable);
-
-            // Handle extra images
-            if (extraImageFiles != null) {
-                for (MultipartFile file : extraImageFiles) {
-                    if (file != null && !file.isEmpty()) {
-                        String originalFilename = file.getOriginalFilename();
-                        if (originalFilename != null) {
-                            String ext = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
-                            if (List.of("jpg", "jpeg", "png").contains(ext)) {
-                                String uniqueName = UUID.randomUUID() + "." + ext;
-                                Path uploadPath = Paths.get(uploadDir);
-                                if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
-                                Files.copy(file.getInputStream(), uploadPath.resolve(uniqueName));
-                                product.getExtraImageUrls().add("/uploads/" + uniqueName);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Handle videos
-            if (videoFiles != null) {
-                for (MultipartFile file : videoFiles) {
-                    if (file != null && !file.isEmpty()) {
-                        String originalFilename = file.getOriginalFilename();
-                        if (originalFilename != null) {
-                            String ext = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
-                            if (List.of("mp4", "webm", "ogg").contains(ext)) {
-                                String uniqueName = UUID.randomUUID() + "." + ext;
-                                Path uploadPath = Paths.get(uploadDir);
-                                if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
-                                Files.copy(file.getInputStream(), uploadPath.resolve(uniqueName));
-                                product.getVideoUrls().add("/uploads/" + uniqueName);
-                            }
-                        }
-                    }
-                }
-            }
-
-            productRepository.save(product);
-        } catch (Exception e) {
-            System.err.println("Add product error: " + e.getMessage());
-            return "redirect:/admin?error=product_add_failed";
-        }
-        return "redirect:/admin?success=product_added";
-    }
-
-    @PostMapping("/deleteProduct")
-    public String deleteProduct(@RequestParam String id) {
-        try {
-            productRepository.deleteById(id);
-        } catch (Exception e) {
-            // Error handling
-        }
-        return "redirect:/admin?success=product_deleted";
-    }
-
-    @PostMapping("/editProduct")
-    public String editProduct(@RequestParam String id, @RequestParam double price, @RequestParam int setsAvailable) {
-        try {
-            if (setsAvailable < 0 || price < 0) {
-                 return "redirect:/admin?error=negative_values_not_allowed";
-            }
-            Optional<Product> prodOpt = productRepository.findById(id);
-            if (prodOpt.isPresent()) {
-                Product p = prodOpt.get();
-                p.setPrice(price);
-                p.setSetsAvailable(setsAvailable);
-                productRepository.save(p);
-            }
-        } catch (Exception e) {
-            // Error handling
-        }
-        return "redirect:/admin?success=product_updated";
-    }
-
-    @PostMapping("/restock")
-    public String restock(@RequestParam String id, @RequestParam int refillAmount) {
-        try {
-            if (refillAmount <= 0) return "redirect:/admin?error=invalid_refill";
-            Optional<Product> prodOpt = productRepository.findById(id);
-            if (prodOpt.isPresent()) {
-                Product p = prodOpt.get();
-                p.setSetsAvailable(p.getSetsAvailable() + refillAmount);
-                productRepository.save(p);
-            }
-        } catch (Exception e) {
-            // Error handling
-        }
-        return "redirect:/admin?success=product_restocked";
-    }
 }

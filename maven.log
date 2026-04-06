@@ -1,0 +1,56 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------------< com.example:demo >--------------------------
+[INFO] Building  0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.3.2:clean (default-clean) @ demo ---
+[INFO] Deleting C:\Users\princ\OneDrive\Desktop\Textile\demo\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ demo ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 16 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ demo ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 51 source files with javac [debug release 21] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/princ/OneDrive/Desktop/Textile/demo/src/main/java/com/example/demo/DataLoader.java:[68,40] no suitable constructor found for Product(java.lang.String,java.lang.String,double,java.lang.String,boolean,boolean,java.lang.String,int,int)
+    constructor com.example.demo.Product.Product() is not applicable
+      (actual and formal argument lists differ in length)
+    constructor com.example.demo.Product.Product(java.lang.String,java.lang.String,double,java.lang.String,boolean,boolean,java.lang.String,java.lang.String,int,int) is not applicable
+      (actual and formal argument lists differ in length)
+[ERROR] /C:/Users/princ/OneDrive/Desktop/Textile/demo/src/main/java/com/example/demo/DataLoader.java:[69,40] no suitable constructor found for Product(java.lang.String,java.lang.String,double,java.lang.String,boolean,boolean,java.lang.String,int,int)
+    constructor com.example.demo.Product.Product() is not applicable
+      (actual and formal argument lists differ in length)
+    constructor com.example.demo.Product.Product(java.lang.String,java.lang.String,double,java.lang.String,boolean,boolean,java.lang.String,java.lang.String,int,int) is not applicable
+      (actual and formal argument lists differ in length)
+[INFO] 2 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  7.598 s
+[INFO] Finished at: 2026-04-06T22:58:43+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project demo: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/princ/OneDrive/Desktop/Textile/demo/src/main/java/com/example/demo/DataLoader.java:[68,40] no suitable constructor found for Product(java.lang.String,java.lang.String,double,java.lang.String,boolean,boolean,java.lang.String,int,int)
+[ERROR]     constructor com.example.demo.Product.Product() is not applicable
+[ERROR]       (actual and formal argument lists differ in length)
+[ERROR]     constructor com.example.demo.Product.Product(java.lang.String,java.lang.String,double,java.lang.String,boolean,boolean,java.lang.String,java.lang.String,int,int) is not applicable
+[ERROR]       (actual and formal argument lists differ in length)
+[ERROR] /C:/Users/princ/OneDrive/Desktop/Textile/demo/src/main/java/com/example/demo/DataLoader.java:[69,40] no suitable constructor found for Product(java.lang.String,java.lang.String,double,java.lang.String,boolean,boolean,java.lang.String,int,int)
+[ERROR]     constructor com.example.demo.Product.Product() is not applicable
+[ERROR]       (actual and formal argument lists differ in length)
+[ERROR]     constructor com.example.demo.Product.Product(java.lang.String,java.lang.String,double,java.lang.String,boolean,boolean,java.lang.String,java.lang.String,int,int) is not applicable
+[ERROR]       (actual and formal argument lists differ in length)
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

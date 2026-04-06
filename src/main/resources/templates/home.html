@@ -13,16 +13,32 @@
 
     <!-- Unified Navbar Component -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
-        <div class="container">
-            <a class="navbar-brand fw-bold text-primary" href="/" aria-label="Textile Market Home">
+        <div class="container d-flex align-items-center">
+            <a class="navbar-brand fw-bold text-primary me-auto" href="/" aria-label="Textile Market Home">
                 <i class="fa-solid fa-layer-group"></i> Textile Market
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+
+            <!-- Mobile Persistent Icons -->
+            <div class="d-flex align-items-center gap-3 order-lg-2 me-3 me-lg-0">
+                <a class="text-dark text-decoration-none d-lg-none" href="/products" aria-label="Shop All">
+                    <i class="fa-solid fa-store fs-4"></i>
+                </a>
+                <div th:if="${#authorization.expression('isAuthenticated()')}" class="d-lg-none">
+                    <a class="text-dark text-decoration-none position-relative" href="/cart" aria-label="View Cart">
+                        <i class="fa-solid fa-cart-shopping fs-4"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cartBadgeMobile" style="display:none;">0</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Toggler -->
+            <button class="navbar-toggler order-lg-3" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="mainNav">
+
+            <div class="collapse navbar-collapse order-lg-1" id="mainNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
+                    <li class="nav-item d-none d-lg-block">
                         <a class="nav-link active" href="/products"><i class="fa-solid fa-store"></i> Shop All</a>
                     </li>
                 </ul>
@@ -58,9 +74,75 @@
             <i class="fa-solid fa-check-circle"></i> Operation Successful!
         </div>
 
+        <!-- Dynamic Carousel Setup -->
+        <div th:if="${!#lists.isEmpty(carouselMedias)}" id="homeCarousel" class="carousel slide mb-5 rounded shadow-sm overflow-hidden" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                <button th:each="media, iterStat : ${carouselMedias}" type="button" data-bs-target="#homeCarousel" th:attr="data-bs-slide-to=${iterStat.index}" th:class="${iterStat.first ? 'active' : ''}" aria-current="true"></button>
+            </div>
+            
+            <div class="carousel-inner" style="max-height: 500px;">
+                <div th:each="media, iterStat : ${carouselMedias}" th:class="${iterStat.first ? 'carousel-item active' : 'carousel-item'}" style="height: 500px; background-color: #000;">
+                    
+                    <div th:if="${media.type == 'IMAGE'}">
+                        <img th:src="${media.mediaUrl}" class="d-block w-100 h-100" style="object-fit: cover;" alt="Promo">
+                    </div>
+                    
+                    <div th:if="${media.type == 'VIDEO'}">
+                         <video class="d-block w-100 h-100" style="object-fit: cover;" autoplay loop muted playsinline>
+                            <source th:src="${media.mediaUrl}" type="video/mp4">
+                            Your browser does not support the video tag.
+                         </video>
+                    </div>
+
+                    <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded px-4 py-3">
+                        <h2 class="fw-bold" th:text="${media.title}">Promo Title</h2>
+                        <p class="mb-0 fs-5" th:text="${media.subtitle}">Catchy subtitle here</p>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="carousel-control-prev" type="button" data-bs-target="#homeCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#homeCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+
         <div class="text-center mb-5">
             <h1 class="display-4 fw-bold">Explore Premium Fabrics</h1>
-            <p class="lead text-muted">Curated textiles securely delivered.</p>
+            <p class="lead text-muted mb-4">Curated textiles securely delivered.</p>
+            
+            <!-- Quick Front-Page Filter -->
+            <div class="card shadow-sm border-0 mx-auto" style="max-width: 800px;">
+                <div class="card-body p-4 bg-light rounded">
+                    <form method="get" th:action="@{/products}" class="row g-2 align-items-center">
+                        <div class="col-md-3">
+                            <select name="placeId" class="form-select form-select-lg shadow-sm border-0">
+                                <option value="" selected>All Hubs</option>
+                                <option th:each="p : ${places}" th:value="${p.id}" th:text="${p.name}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="categoryId" class="form-select form-select-lg shadow-sm border-0">
+                                <option value="" selected>All Categories</option>
+                                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="sortBy" class="form-select form-select-lg shadow-sm border-0">
+                                <option value="createdAt" selected>Newest First</option>
+                                <option value="price">Price</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary-tx btn-lg w-100 shadow-sm fw-bold"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <h3 class="mb-4 fw-bold"><i class="fa-solid fa-fire text-danger"></i> Trending Places</h3>
@@ -111,20 +193,72 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Smart Carousel Control
+            const myCarouselEl = document.getElementById('homeCarousel');
+            if(myCarouselEl) {
+                // Initialize Carousel with Auto-Slide disabled natively
+                const bsCarousel = new bootstrap.Carousel(myCarouselEl, {
+                    interval: false, 
+                    wrap: true
+                });
+                
+                let slideTimeout = null;
+
+                function playActiveContent() {
+                    if(slideTimeout) clearTimeout(slideTimeout);
+
+                    const activeItem = myCarouselEl.querySelector('.carousel-item.active');
+                    if(!activeItem) return;
+
+                    const video = activeItem.querySelector('video');
+                    if(video) {
+                        video.currentTime = 0;
+                        video.play().catch(e => console.log('Autoplay issue:', e));
+                        // Listen for video end to slide
+                        video.onended = () => bsCarousel.next();
+                    } else {
+                        // For images, slide after 2000ms
+                        slideTimeout = setTimeout(() => {
+                            bsCarousel.next();
+                        }, 2000);
+                    }
+                }
+
+                // Trigger on load
+                playActiveContent();
+
+                // Trigger whenever slide finishes transitioning
+                myCarouselEl.addEventListener('slid.bs.carousel', function () {
+                    playActiveContent();
+                });
+            }
+        });
+
         async function loadCartBadge() {
             try {
                 const res = await fetch('/api/cart/count');
                 if (res.ok) {
                     const data = await res.json();
+                    
+                    // Desktop badge
                     const badge = document.getElementById('cartBadge');
                     if (badge && data.count > 0) {
                         badge.textContent = data.count;
                         badge.style.display = '';
                     }
+                    
+                    // Mobile badge
+                    const badgeMobile = document.getElementById('cartBadgeMobile');
+                    if (badgeMobile && data.count > 0) {
+                        badgeMobile.textContent = data.count;
+                        badgeMobile.style.display = '';
+                    }
                 }
             } catch(e) {}
         }
-        document.addEventListener('DOMContentLoaded', loadCartBadge);
+        
+        loadCartBadge();
     </script>
 </body>
 </html>

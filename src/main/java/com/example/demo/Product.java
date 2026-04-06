@@ -2,6 +2,8 @@ package com.example.demo;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.index.Indexed;
+import java.time.LocalDateTime;
 
 @Document(collection = "products")
 public class Product {
@@ -15,13 +17,22 @@ public class Product {
     private java.util.List<String> videoUrls = new java.util.ArrayList<>();
     private boolean isMostlyBought;
     private boolean isNewlyAdded;
+    
+    @Indexed
     private String placeId;
+    
+    @Indexed
+    private String categoryId;
+    
     private int minQuantity;
     private int setsAvailable;
+    
+    @Indexed
+    private LocalDateTime createdAt;
 
     public Product() {}
 
-    public Product(String name, String description, double price, String imageUrl, boolean isMostlyBought, boolean isNewlyAdded, String placeId, int minQuantity, int setsAvailable) {
+    public Product(String name, String description, double price, String imageUrl, boolean isMostlyBought, boolean isNewlyAdded, String placeId, String categoryId, int minQuantity, int setsAvailable) {
         this.name = name;
         this.description = description;
         this.price = price;
@@ -29,11 +40,13 @@ public class Product {
         this.isMostlyBought = isMostlyBought;
         this.isNewlyAdded = isNewlyAdded;
         this.placeId = placeId;
+        this.categoryId = categoryId;
         this.minQuantity = minQuantity;
         this.setsAvailable = setsAvailable;
         // Ensure lists are initialized
         this.extraImageUrls = new java.util.ArrayList<>();
         this.videoUrls = new java.util.ArrayList<>();
+        this.createdAt = LocalDateTime.now();
     }
 
     // getters and setters
@@ -133,5 +146,21 @@ public class Product {
 
     public void setSetsAvailable(int setsAvailable) {
         this.setsAvailable = setsAvailable;
+    }
+
+    public String getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }
